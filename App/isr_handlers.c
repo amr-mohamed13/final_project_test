@@ -56,8 +56,8 @@ void EXTI3_IRQHandler(void) {
 
 void EXTI4_IRQHandler(void) {
     Exti_ClearPending(PIN_EMERG_PIN);
-    /* Read current pin state: pressed = LOW (active low) */
-    if (Gpio_ReadPin(PIN_EMERG_PORT, PIN_EMERG_PIN) == LOW) {
+    /* Toggle emergency state on every press (momentary tactile button) */
+    if (LOCAL_ELEV.emergencyStop == 0) {
         ElevFsm_EmergencyStop(&LOCAL_ELEV);
     } else {
         ElevFsm_EmergencyRelease(&LOCAL_ELEV);

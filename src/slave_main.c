@@ -84,8 +84,8 @@ static void InitExti(void) {
     Exti_Init(EXTI_PORT_B, PIN_CABIN_F3, EXTI_FALLING, 4U);
     Exti_Init(EXTI_PORT_B, PIN_CABIN_F4, EXTI_FALLING, 4U);
 
-    /* Emergency: PB4, both edges, priority 0 (HIGHEST) */
-    Exti_Init(EXTI_PORT_B, PIN_EMERG_PIN, EXTI_BOTH, 0U);
+    /* Emergency: PB4, falling edge only (toggle via ISR), priority 0 (HIGHEST) */
+    Exti_Init(EXTI_PORT_B, PIN_EMERG_PIN, EXTI_FALLING, 0U);
 
     /* Position sensors: PC12-PC15, rising edge, priority 2 */
     Exti_Init(EXTI_PORT_C, PIN_POS_F1, EXTI_RISING, 2U);
@@ -133,6 +133,10 @@ static void ProcessMasterCommand(void) {
 
     case SPI_CMD_EMERGENCY_ALL:
         ElevFsm_EmergencyStop(&g_elevB);
+        break;
+
+    case SPI_CMD_EMERGENCY_RELEASE:
+        ElevFsm_EmergencyRelease(&g_elevB);
         break;
 
     case SPI_CMD_NOP:

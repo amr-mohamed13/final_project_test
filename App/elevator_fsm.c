@@ -259,6 +259,12 @@ void ElevFsm_AddCabinRequest(ElevatorState_t *elev, uint8 floor) {
 
 void ElevFsm_EmergencyStop(ElevatorState_t *elev) {
     elev->emergencyStop = 1;
+    /* Wipe all pending calls so the elevator stays idle when released */
+    ENTER_CRITICAL();
+    elev->upRequests    = 0;
+    elev->downRequests  = 0;
+    elev->cabinRequests = 0;
+    EXIT_CRITICAL();
 }
 
 void ElevFsm_EmergencyRelease(ElevatorState_t *elev) {

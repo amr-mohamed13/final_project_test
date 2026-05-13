@@ -54,6 +54,17 @@ static void DoSpiExchange(void) {
     slaveCmd = SPI_CMD_ASSIGN_FLOOR;
   }
 
+  /* Emergency broadcast overrides all other commands */
+  static uint8 s_prevEmergency = 0;
+  if (g_elevA.emergencyStop) {
+    slaveCmd = SPI_CMD_EMERGENCY_ALL;
+    s_prevEmergency = 1;
+  } else if (s_prevEmergency) {
+    /* Emergency just cleared — tell slave to resume */
+    slaveCmd = SPI_CMD_EMERGENCY_RELEASE;
+    s_prevEmergency = 0;
+  }
+
   /* Protect g_elevA from concurrent EXTI modifications during read */
   ENTER_CRITICAL();
   SpiPacket_Build(&s_txPkt, ELEV_A, &g_elevA, slaveCmd);
@@ -151,9 +162,8 @@ static void InitExti(void) {
   Exti_Init(EXTI_PORT_B, PIN_CABIN_F3, EXTI_FALLING, 4U);
   Exti_Init(EXTI_PORT_B, PIN_CABIN_F4, EXTI_FALLING, 4U);
 
-  /* Emergency — PB4, both edges (detect press + release), priority 0 (HIGHEST)
-   */
-  Exti_Init(EXTI_PORT_B, PIN_EMERG_PIN, EXTI_BOTH, 0U);
+  /* Emergency — PB4, falling edge only (toggle via ISR), priority 0 (HIGHEST) */
+  Exti_Init(EXTI_PORT_B, PIN_EMERG_PIN, EXTI_FALLING, 0U);
 
   /* Hallway calls — PB5-PB10, falling edge, priority 3 */
   Exti_Init(EXTI_PORT_B, PIN_HALL_U1, EXTI_FALLING, 3U);

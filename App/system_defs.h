@@ -96,7 +96,8 @@ typedef struct {
 /* ================================================================== */
 #define SPI_CMD_NOP             0x00U
 #define SPI_CMD_ASSIGN_FLOOR    0x01U   /* requestMask = assigned floors */
-#define SPI_CMD_EMERGENCY_ALL   0x02U
+#define SPI_CMD_EMERGENCY_ALL   0x02U   /* Master emergency → stop slave */
+#define SPI_CMD_EMERGENCY_RELEASE 0x03U /* Master emergency cleared → release slave */
 
 /* ================================================================== */
 /*  VOLATILE FLAGS  (set by ISRs, cleared by main loop)               */
