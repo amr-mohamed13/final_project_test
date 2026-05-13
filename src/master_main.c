@@ -54,7 +54,11 @@ static void DoSpiExchange(void) {
     slaveCmd = SPI_CMD_ASSIGN_FLOOR;
   }
 
+  /* Protect g_elevA from concurrent EXTI modifications during read */
+  ENTER_CRITICAL();
   SpiPacket_Build(&s_txPkt, ELEV_A, &g_elevA, slaveCmd);
+  EXIT_CRITICAL();
+
   if (slaveCmd == SPI_CMD_ASSIGN_FLOOR) {
     /* Pack UP (low nibble) and DOWN (high nibble) into requestMask.
      * Floors are 0–3, so 4 bits per direction fits perfectly. */
@@ -73,15 +77,19 @@ static void DoSpiExchange(void) {
     if (g_spiTimeoutCount >= SPI_TIMEOUT_THRESHOLD) {
       g_slaveOnline = 0;
       /* Master assumes ALL hall calls */
+      ENTER_CRITICAL();
       g_elevB.fsmState = ELEV_EMERGENCY;
+      EXIT_CRITICAL();
     }
   } else {
-    /* Update shadow of Slave state */
+    /* Update shadow of Slave state — protect from concurrent reads */
+    ENTER_CRITICAL();
     g_spiTimeoutCount = 0;
     g_slaveOnline = 1;
     g_elevB.currentFloor = s_rxPkt.currentFloor;
     g_elevB.direction = s_rxPkt.direction;
     g_elevB.fsmState = s_rxPkt.state;
+    EXIT_CRITICAL();
   }
 }
 
@@ -203,10 +211,10 @@ int main(void) {
   Dispatcher_Init(&g_elevA, &g_elevB);
 
   /* 8. Start periodic timers */
-  /* TIM3: SPI exchange every 20ms  (PSC=15999 → 1kHz, ARR=19 → 20ms) */
-  Timer_StartPeriodic(SPI_TIMER, 15999U, 19U, SpiTimerCallback);
-  /* TIM4: Telemetry every 100ms    (PSC=15999 → 1kHz, ARR=99 → 100ms) */
-  Timer_StartPeriodic(TELEMETRY_TIMER, 15999U, 99U, TelemetryTimerCallback);
+  /* TIM3: SPI exchange every 50ms  (PSC=15999 → 1kHz tick, ARR=49 → 50ms) */
+  Timer_StartPeriodic(SPI_TIMER, 15999U, 49U, SpiTimerCallback);
+  /* TIM4: Telemetry every 500ms   (PSC=15999 → 1kHz tick, ARR=499 → 500ms) */
+  Timer_StartPeriodic(TELEMETRY_TIMER, 15999U, 499U, TelemetryTimerCallback);
 
   /* ============ SUPERLOOP ============ */
   while (1) {

@@ -128,10 +128,19 @@ void Dispatcher_Run(void) {
             } else if (scoreB < scoreA) {
                 winner = ELEV_B;
             } else {
-                /* Tie-break: nearest elevator */
+                /* Tie-break: nearest elevator, alternate on exact tie */
                 uint8 distA = AbsDiff(s_elevA->currentFloor, floor);
                 uint8 distB = AbsDiff(s_elevB->currentFloor, floor);
-                winner = (distA <= distB) ? ELEV_A : ELEV_B;
+                if (distA < distB) {
+                    winner = ELEV_A;
+                } else if (distB < distA) {
+                    winner = ELEV_B;
+                } else {
+                    /* Equal distance — alternate to balance wear */
+                    static uint8 s_tieToggle = 0;
+                    winner = (s_tieToggle & 1U) ? ELEV_B : ELEV_A;
+                    s_tieToggle++;
+                }
             }
 
             /* Assign the call */

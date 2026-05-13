@@ -8,6 +8,7 @@
 #include "elevator_fsm.h"
 #include "Pwm.h"
 #include "Timer.h"
+#include "system_defs.h"    /* ENTER_CRITICAL / EXIT_CRITICAL */
 
 /* ------------------------------------------------------------------ */
 /*  Internal helpers                                                  */
@@ -39,9 +40,12 @@ static uint8 HasAnyRequest(const ElevatorState_t *e) {
 /** Clear all requests for the given floor. */
 static void ClearFloorRequests(ElevatorState_t *e, uint8 floor) {
     uint8 bit = (uint8)(1U << floor);
+    /* Protect read-modify-write of volatile bitmasks shared with EXTI ISRs */
+    ENTER_CRITICAL();
     e->cabinRequests &= ~bit;
     e->upRequests    &= ~bit;
     e->downRequests  &= ~bit;
+    EXIT_CRITICAL();
 }
 
 /** Set motor PWM duty cycle. */

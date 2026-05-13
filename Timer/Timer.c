@@ -54,7 +54,7 @@ void Timer_DelayMs(uint8 TimerId, uint32 DelayMs) {
     TimerType *timer =(TimerType *)Timer_BaseAddresses[TimerId - TIMER2];
 
     timer->CR1 = 0; // Stop & reset
-    timer->PSC = 15999U / 3;
+    timer->PSC = 15999U;
     timer->ARR = (uint16) (DelayMs - 1);
     timer->CNT = 0;
 
@@ -81,7 +81,7 @@ void Timer_DelayMsAsync(uint8 TimerId, uint32 DelayMs, TimerCallback Callback) {
     Timer_Callbacks[index] = Callback;
 
     timer->CR1 = 0; // Stop & reset
-    timer->PSC = 15999U / 3;
+    timer->PSC = 15999U;
     timer->ARR = (uint16) (DelayMs - 1);
     timer->CNT = 0;
 

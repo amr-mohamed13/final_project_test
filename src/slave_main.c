@@ -101,7 +101,10 @@ static SpiPacket_t s_rxPkt;
 static SpiPacket_t s_txPkt;
 
 static void PreloadSpiStatus(void) {
+    /* Protect g_elevB from concurrent EXTI modifications during read */
+    ENTER_CRITICAL();
     SpiPacket_Build(&s_txPkt, ELEV_B, &g_elevB, SPI_CMD_NOP);
+    EXIT_CRITICAL();
     Spi_SlavePreload((const uint8 *)&s_txPkt, SPI_FRAME_LEN);
 }
 
@@ -120,8 +123,11 @@ static void ProcessMasterCommand(void) {
         /* Master packs: UP in low nibble, DOWN in high nibble */
         uint8 upMask   = s_rxPkt.requestMask & 0x0FU;
         uint8 downMask = (s_rxPkt.requestMask >> 4U) & 0x0FU;
+        /* Protect read-modify-write of shared request bitmasks */
+        ENTER_CRITICAL();
         g_elevB.upRequests   |= upMask;
         g_elevB.downRequests |= downMask;
+        EXIT_CRITICAL();
         break;
     }
 
